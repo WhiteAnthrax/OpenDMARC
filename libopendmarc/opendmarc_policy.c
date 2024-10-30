@@ -307,6 +307,16 @@ opendmarc_policy_check_alignment(u_char *subdomain, u_char *tld, int mode)
 	if (strcasecmp(rev_tld, rev_sub) == 0)
 		return 0;
 
+	/*
+	 * For strict mode, only exact matches are allowed
+	 * as per RFC 7489 Section 3.1.1 and 3.1.2
+	 */
+	if (mode == DMARC_RECORD_A_STRICT)
+		return -1;
+
+	/*
+	 * For relaxed mode, check if domain or subdomain matches
+	 */
 	ret = strncasecmp(rev_tld, rev_sub, strlen(rev_tld));
 	if (ret == 0 && mode == DMARC_RECORD_A_RELAXED)
 			return 0;
@@ -324,12 +334,7 @@ opendmarc_policy_check_alignment(u_char *subdomain, u_char *tld, int mode)
 	if (*ep != '.')
 		(void) strlcat((char *)rev_tld, ".", sizeof rev_tld);
 
-	/*
-	 * Perfect match is aligned irrespective of relaxed or strict.
-	 */
-	if (strcasecmp(rev_tld, rev_sub) == 0)
-		return 0;
-
+	/* Check organizational domain match for relaxed mode */
 	ret = strncasecmp(rev_tld, rev_sub, strlen(rev_tld));
 	if (ret == 0 && mode == DMARC_RECORD_A_RELAXED)
 			return 0;
